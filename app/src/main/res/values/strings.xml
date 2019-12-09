@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Revolut Currency Converter</string>
+    <string name="rates_activity_title">Rates</string>
+
+    <string name="network_error">No network connection.</string>
+    <string name="errorString">Something went wrong, Please try again.</string>
+</resources>
