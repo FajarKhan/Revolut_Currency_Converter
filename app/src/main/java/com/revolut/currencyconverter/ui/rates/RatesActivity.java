@@ -2,6 +2,7 @@ package com.revolut.currencyconverter.ui.rates;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -10,6 +11,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.revolut.currencyconverter.MyApplication;
 import com.revolut.currencyconverter.R;
 import com.revolut.currencyconverter.model.RatesListModel;
@@ -31,7 +33,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_FROM_POSITION;
+import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_RATE;
 import static com.revolut.currencyconverter.utils.Constant.BASE_RATE;
+import static com.revolut.currencyconverter.utils.Constant.EUR_MOVED_RATE;
 import static com.revolut.currencyconverter.utils.Constant.KEY_CURRENCY_NAME;
 import static com.revolut.currencyconverter.utils.Constant.KEY_RATE;
 
@@ -44,6 +48,8 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
     TextView tvTitle;
     @BindView(R.id.rv_rates)
     RecyclerView rvRates;
+    @BindView(R.id.shimmer_layout)
+    ShimmerFrameLayout shimmerLayout;
 
     private RatesViewModel viewModel;
     private RatesListAdapter adapter;
@@ -90,16 +96,22 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
         switch (apiResponse.status) {
 
             case LOADING:
-                viewDialog.showDialog();
+                shimmerLayout.setVisibility(View.VISIBLE);
+                shimmerLayout.startShimmer();
+//                viewDialog.showDialog();
                 break;
 
             case SUCCESS:
-                viewDialog.hideDialog();
+//                viewDialog.hideDialog();
+                shimmerLayout.setVisibility(View.GONE);
+                shimmerLayout.stopShimmer();
                 renderSuccessResponse(apiResponse.data);
                 break;
 
             case ERROR:
-                viewDialog.hideDialog();
+                shimmerLayout.setVisibility(View.GONE);
+                shimmerLayout.stopShimmer();
+//                viewDialog.hideDialog();
                 Toast.makeText(RatesActivity.this, getResources().getString(R.string.errorString), Toast.LENGTH_SHORT).show();
                 break;
 
@@ -131,27 +143,35 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
             rvRates.setLayoutManager(new LinearLayoutManager(this));
             adapter = new RatesListAdapter(list, this, ratesModel, this);
             rvRates.setHasFixedSize(true);
+//            rvRates.setItemViewCacheSize(list.size());
             rvRates.setAdapter(adapter);
         } else {
-            setUpdatedRates(list);
+            setUpdatedRates(list, adapter.getOldRatesList());
         }
     }
 
     @Override
-    public void OnBaseRateChanged(List<RatesListModel> newRatesList) {
-        setUpdatedRates(newRatesList);
+    public void OnBaseRateChanged(List<RatesListModel> newRatesList, List<RatesListModel> oldRatesList) {
+        setUpdatedRates(newRatesList, oldRatesList);
     }
 
-    private void setUpdatedRates(List<RatesListModel> newRatesList) {
-        if (BASE_MOVED_FROM_POSITION != 0) {
-            newRatesList.remove(BASE_MOVED_FROM_POSITION);
-            newRatesList.add(0, newRatesList.get(0));
-        }
-        for (int i = 1; i < newRatesList.size(); i++) {
-            Bundle diffPayLoad = new Bundle();
-            diffPayLoad.putString(KEY_RATE, newRatesList.get(i).getCurrencyRate());
-            diffPayLoad.putString(KEY_CURRENCY_NAME, newRatesList.get(i).getCountryCode());
-            adapter.notifyItemChanged(i, diffPayLoad);
+    private void setUpdatedRates(List<RatesListModel> newRatesList, List<RatesListModel> oldRatesList) {
+//        if (BASE_MOVED_FROM_POSITION != 0) {
+//            newRatesList.remove(BASE_MOVED_FROM_POSITION);
+//            newRatesList.add(0, newRatesList.get(0));
+//        }
+//        if (BASE_MOVED_FROM_POSITION != 0 && !(newRatesList.get(BASE_MOVED_FROM_POSITION).getCurrencyRate()).equals(""))
+//            EUR_MOVED_RATE = newRatesList.get(BASE_MOVED_FROM_POSITION).getCurrencyRate();
+        for (int i = 1; i < oldRatesList.size(); i++) {
+            for (int j = 0; j < newRatesList.size(); j++) {
+                if (oldRatesList.get(i).getCountryCode().equals(newRatesList.get(j).getCountryCode())) {
+                    Bundle diffPayLoad = new Bundle();
+                    diffPayLoad.putString(KEY_RATE, newRatesList.get(j).getCurrencyRate());
+                    diffPayLoad.putString(KEY_CURRENCY_NAME, newRatesList.get(j).getCountryCode());
+                    adapter.notifyItemChanged(i, diffPayLoad);
+                }
+            }
+//            adapter.notifyItemChanged(i, diffPayLoad);
         }
     }
 }

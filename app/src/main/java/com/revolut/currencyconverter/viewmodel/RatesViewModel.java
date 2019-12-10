@@ -36,7 +36,7 @@ public class RatesViewModel extends ViewModel {
     }
 
     /*
-     * method to call normal login api with $(mobileNumber + password)
+     * method to call rates api with currencyCode
      * */
     public void getRates(String countryCode) {
 

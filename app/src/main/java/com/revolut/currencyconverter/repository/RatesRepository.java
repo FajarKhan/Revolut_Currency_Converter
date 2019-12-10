@@ -18,7 +18,7 @@ public class RatesRepository {
     }
 
     /*
-     * method to call login api
+     * method to call Rates api
      * */
     public Observable<RatesResponse> executeRates(String countryCode) {
         return apiCallInterface.getRates(countryCode);

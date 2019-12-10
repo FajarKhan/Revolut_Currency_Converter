@@ -82,8 +82,10 @@ public class Constant {
     public static String EUR_RATE = "100";
     public static int BASE_MOVED_FROM_POSITION = 0;
     public static String BASE_MOVED_RATE = "BASE_MOVED_RATE";
+    public static String BASE_MOVED_CURRENCY_CODE = "BASE_MOVED_CURRENCY_CODE";
     public static String KEY_RATE = "key_rate";
     public static String KEY_CURRENCY_NAME = "key_currency_name";
+    public static String EUR_MOVED_RATE = "eur_moved_rate";
 
 
     public static boolean checkInternetConnection(Context context) {
@@ -104,21 +106,25 @@ public class Constant {
         return false;
     }
 
-    public static String getCurrencyRate(String currency) {
+    public static String getCurrencyRate(String currency, int pos) {
         if (BASE_RATE.equals(".")) BASE_RATE = "0.";
         if (BASE_RATE.equals("0")) {
             return "";
-        } else if (BASE_MOVED_FROM_POSITION != 0) {
+        } else if (BASE_MOVED_FROM_POSITION != 0 && BASE_MOVED_FROM_POSITION == pos && !BASE_MOVED_CURRENCY_CODE.equals(EUR)) {
+            EUR_MOVED_RATE = currency;
+            return currency;
+        } else if (BASE_MOVED_FROM_POSITION != 0 ) {
             return String.valueOf((Float.parseFloat(BASE_RATE) * (Float.parseFloat(currency) / Float.parseFloat(BASE_MOVED_RATE))) * Float.parseFloat(EUR_RATE));
         } else
             return String.valueOf(Float.parseFloat(BASE_RATE) * Float.parseFloat(currency));
     }
 
     public static String getEURRating(String eur) {
+        if (BASE_RATE.equals(".")) BASE_RATE = "0.";
         if (BASE_RATE.equals("0")) {
             return "";
         } else if (BASE_MOVED_FROM_POSITION != 0) {
-            return String.valueOf((Float.parseFloat(BASE_RATE) / Float.parseFloat(BASE_MOVED_RATE)) * Float.parseFloat(EUR_RATE));
+            return String.valueOf((Float.parseFloat(BASE_RATE) / Float.parseFloat(EUR_MOVED_RATE)));
         } else {
             return eur;
         }
