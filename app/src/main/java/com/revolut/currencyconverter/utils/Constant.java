@@ -6,8 +6,6 @@ import android.net.NetworkInfo;
 
 
 public class Constant {
-
-
     // country code
     public static String EUR = "EUR";
     public static String CHF = "CHF";
@@ -78,6 +76,9 @@ public class Constant {
     public static String NZD_CURRENCY = "New Zealand Dollar";
     public static String BRL_CURRENCY = "Brazilian Real";
 
+    /*
+     * reference names
+     * */
     public static String BASE_RATE = "100";
     public static String EUR_RATE = "100";
     public static int BASE_MOVED_FROM_POSITION = 0;
@@ -87,7 +88,9 @@ public class Constant {
     public static String KEY_CURRENCY_NAME = "key_currency_name";
     public static String EUR_MOVED_RATE = "eur_moved_rate";
 
-
+    /*
+     * method to check user internet connection
+     * */
     public static boolean checkInternetConnection(Context context) {
         ConnectivityManager connectivity = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -106,25 +109,45 @@ public class Constant {
         return false;
     }
 
-    public static String getCurrencyRate(String currency, int pos) {
+    /*
+     * method to set currency based on base rate
+     * */
+    public static String getCurrencyRate(String currency, String countryCode) {
+        // return empty if typed data is 0 and 0.1 if . respectively
         if (BASE_RATE.equals(".")) BASE_RATE = "0.";
-        if (BASE_RATE.equals("0")) {
+        if (BASE_RATE.equals("0"))
             return "";
-        } else if (BASE_MOVED_FROM_POSITION != 0 && BASE_MOVED_FROM_POSITION == pos && !BASE_MOVED_CURRENCY_CODE.equals(EUR)) {
+
+            //return current currency if base currency is same as current currency
+        else if (BASE_MOVED_FROM_POSITION != 0 && BASE_MOVED_CURRENCY_CODE.equals(countryCode) && !BASE_MOVED_CURRENCY_CODE.equals(EUR)) {
             EUR_MOVED_RATE = currency;
             return currency;
-        } else if (BASE_MOVED_FROM_POSITION != 0 ) {
+        }
+        //calculating currency rate if base is changed by user using formula: user typed amount * (current currency/base rate) * EUR rate
+        else if (BASE_MOVED_FROM_POSITION != 0) {
             return String.valueOf((Float.parseFloat(BASE_RATE) * (Float.parseFloat(currency) / Float.parseFloat(BASE_MOVED_RATE))) * Float.parseFloat(EUR_RATE));
-        } else
+        }
+        //calculating currency rate using formula: user typed amount * current currency rate
+        else
             return String.valueOf(Float.parseFloat(BASE_RATE) * Float.parseFloat(currency));
     }
 
+    /*
+     * method to set EUR currency based on base rate
+     * */
     public static String getEURRating(String eur) {
+        // return empty if typed data is 0 and 0.1 if . respectively
         if (BASE_RATE.equals(".")) BASE_RATE = "0.";
-        if (BASE_RATE.equals("0")) {
+        if (BASE_RATE.equals("0"))
             return "";
-        } else if (BASE_MOVED_FROM_POSITION != 0) {
-            return String.valueOf((Float.parseFloat(BASE_RATE) / Float.parseFloat(EUR_MOVED_RATE)));
+
+            //calculating currency rate if base is changed by user using formula: user typed amount / EUR rate
+        else if (BASE_MOVED_FROM_POSITION != 0) {
+            if (BASE_RATE.equals(EUR_MOVED_RATE)) {
+                return String.valueOf((Float.parseFloat(BASE_RATE) / Float.parseFloat(EUR_MOVED_RATE)) * Float.parseFloat(EUR_RATE));
+            } else {
+                return String.valueOf((Float.parseFloat(BASE_RATE) / Float.parseFloat(EUR_MOVED_RATE)));
+            }
         } else {
             return eur;
         }

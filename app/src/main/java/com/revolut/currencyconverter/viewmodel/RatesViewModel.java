@@ -4,7 +4,6 @@ package com.revolut.currencyconverter.viewmodel;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.revolut.currencyconverter.model.RatesResponse;
 import com.revolut.currencyconverter.repository.RatesRepository;
 import com.revolut.currencyconverter.utils.ApiResponse;
 
@@ -12,8 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -36,7 +33,7 @@ public class RatesViewModel extends ViewModel {
     }
 
     /*
-     * method to call rates api with currencyCode
+     * method to call rates api with currencyCode which will call every 1 sec
      * */
     public void getRates(String countryCode) {
 
@@ -50,7 +47,6 @@ public class RatesViewModel extends ViewModel {
                         result -> responseLiveData.setValue(ApiResponse.success(result)),
                         throwable -> responseLiveData.setValue(ApiResponse.error(throwable))
                 ));
-
     }
 
     @Override

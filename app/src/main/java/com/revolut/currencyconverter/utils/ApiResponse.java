@@ -14,6 +14,9 @@ import static com.revolut.currencyconverter.utils.Status.SUCCESS;
  * Created by ${Fajar Khan} on 07-12-2019.
  */
 
+/*
+ * class to handle response data
+ * */
 public class ApiResponse {
 
     public final Status status;

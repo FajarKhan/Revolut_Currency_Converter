@@ -58,6 +58,7 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.item_rates_list_layout, parent, false);
+        // adding our EditText for text change listener
         ViewHolder vh = new ViewHolder(view, new CustomEditTextListener());
         return vh;
     }
@@ -68,40 +69,56 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
         parentRecycler = recyclerView;
     }
 
-
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         RatesListModel ratesListModel = ratesList.get(position);
+        // set base rate according to our list
         baseRate = ratesList.get(0);
-        if (ratesListModel != null) {
 
+        //set currency data
+        if (ratesListModel != null) {
             if (ratesListModel.getCountryFlag() != 0)
                 holder.imgCountryFlag.setImageDrawable(ContextCompat.getDrawable(context, ratesListModel.getCountryFlag()));
             else
                 holder.imgCountryFlag.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.empthy_flag_shape));
 
-            if (ratesListModel.getCurrencyRate() != null) {
-//                String rates = ratesListModel.getCurrencyRate().substring(0, Math.min(ratesListModel.getCurrencyRate().length(), 8));
-//                if (rates.endsWith(".")) {
-//                    rates.substring(0, rates.length() - 1);
-//                    holder.editTextCurrencyRate.setText(rates);
-//                } else
-                    holder.editTextCurrencyRate.setText(ratesListModel.getCurrencyRate());
-            }
-
+            if (ratesListModel.getCurrencyRate() != null)
+                holder.editTextCurrencyRate.setText(ratesListModel.getCurrencyRate());
             if (ratesListModel.getCountryCode() != null)
                 holder.txtCountryCode.setText(ratesListModel.getCountryCode());
             if (ratesListModel.getCurrencyName() != null)
                 holder.txtCountryCurrency.setText(ratesListModel.getCurrencyName());
-
         }
 
+        //setup EditText
         String countryCode = holder.txtCountryCode.getText().toString();
         holder.myCustomEditTextListener.updatePosition(countryCode);
         holder.editTextCurrencyRate.setSelection(holder.editTextCurrencyRate.getText().length());
     }
 
+    /*
+     * calls every time when we update data using payload
+     * */
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else {
+            Bundle o = (Bundle) payloads.get(0);
+            //set updated currency value if the country code is same
+            if ((o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode())))
+                holder.editTextCurrencyRate.setText(o.getString(KEY_RATE));
+        }
+    }
 
+    @Override
+    public int getItemCount() {
+        return ratesList.size();
+    }
+
+    /*
+     * method to handle user input
+     * */
     private void getUpdatedDataBasedOnUserInput(String userInput, boolean isTyping, String countryCode) {
         if (baseRate.getCountryCode().equals(countryCode) && isTyping && hasFocusOnBase) {
             if (userInput.equals("")) {
@@ -112,50 +129,31 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
                 BASE_RATE = userInput;
             }
 
-            //            if (baseRate.getCountryCode().equals(EUR))
-            //                EUR_RATE = BASE_RATE;
-
-
             ratesList.get(0).setCurrencyRate(BASE_RATE);
-            //get new data based on user input
+            //get new data based on user input using interface call
             List<RatesListModel> newRatesList = new SetupRateList().addData(ratesModel, BASE_RATE);
             baseRateChange.OnBaseRateChanged(newRatesList, ratesList);
         }
     }
 
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if (payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
-        } else {
-            Bundle o = (Bundle) payloads.get(0);
-            if ((o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode()))) {
-//                String rates = o.getString(KEY_RATE).substring(0, Math.min(o.getString(KEY_RATE).length(), 8));
-//                if (rates.endsWith(".")) {
-//                    rates.substring(0, rates.length() - 1);
-//                    holder.editTextCurrencyRate.setText(rates);
-
-//                }else
-                holder.editTextCurrencyRate.setText(o.getString(KEY_RATE));
-            }
-        }
-    }
-
-    @Override
-    public int getItemCount() {
-        return ratesList.size();
-    }
-
-
+    /*
+     * calls every time user select any other currency for conversion
+     * */
     private void setNewBase(int position) {
         if (position != 0) {
+            // remove selected currency from list
             RatesListModel ratesListModel = ratesList.get(position);
             ratesList.remove(position);
+
+            // set data for future reference
             BASE_MOVED_FROM_POSITION = position;
             BASE_MOVED_RATE = ratesListModel.getCurrencyRate();
             EUR_MOVED_RATE = ratesListModel.getCurrencyRate();
+            BASE_RATE = ratesListModel.getCurrencyRate();
             BASE_MOVED_CURRENCY_CODE = ratesListModel.getCountryCode();
             baseRate = ratesListModel;
+
+            // add selected data to top of the list and animate it
             ratesList.add(0, ratesListModel);
             notifyItemMoved(position, 0);
             parentRecycler.scrollToPosition(0);
@@ -166,12 +164,15 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
         return ratesList;
     }
 
+    /*
+     * interface to handle user input
+     * */
     public interface baseRateChange {
         void OnBaseRateChanged(List<RatesListModel> newRatesList, List<RatesListModel> oldRatesList);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnFocusChangeListener, View.OnTouchListener {
 
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnFocusChangeListener, View.OnTouchListener {
         public CustomEditTextListener myCustomEditTextListener;
         @BindView(R.id.img_country_flag)
         ImageView imgCountryFlag;
@@ -215,6 +216,9 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
         }
     }
 
+    /*
+     * calls every time user start type any currency rates
+     * */
     private class CustomEditTextListener implements TextWatcher {
         String countryCode;
 

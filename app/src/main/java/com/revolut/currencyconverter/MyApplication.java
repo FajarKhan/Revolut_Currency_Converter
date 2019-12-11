@@ -10,7 +10,7 @@ import com.revolut.currencyconverter.di.UtilsModule;
 
 
 /**
- * Created by ${Saquib} on 03-05-2018.
+ * Created by ${Fajar Khan} on 07-12-2019.
  */
 
 public class MyApplication extends Application {
