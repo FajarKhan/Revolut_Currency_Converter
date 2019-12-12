@@ -20,8 +20,8 @@ import com.revolut.currencyconverter.model.RatesModel;
 import com.revolut.currencyconverter.model.RatesResponse;
 import com.revolut.currencyconverter.ui.adapter.RatesListAdapter;
 import com.revolut.currencyconverter.utils.ApiResponse;
-import com.revolut.currencyconverter.utils.Constant;
 import com.revolut.currencyconverter.utils.SetupRateList;
+import com.revolut.currencyconverter.utils.Utils;
 import com.revolut.currencyconverter.utils.ViewModelFactory;
 import com.revolut.currencyconverter.viewmodel.RatesViewModel;
 
@@ -79,7 +79,7 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
      * method to call API
      * */
     private void getCurrencyRates() {
-        if (!Constant.checkInternetConnection(this)) {
+        if (!Utils.checkInternetConnection(this)) {
             lavNoData.setVisibility(View.VISIBLE);
             rvRates.setVisibility(View.GONE);
             Toast.makeText(RatesActivity.this, getResources().getString(R.string.network_error), Toast.LENGTH_SHORT).show();

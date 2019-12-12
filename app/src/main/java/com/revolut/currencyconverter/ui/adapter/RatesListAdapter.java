@@ -22,8 +22,10 @@ import com.revolut.currencyconverter.R;
 import com.revolut.currencyconverter.model.RatesListModel;
 import com.revolut.currencyconverter.model.RatesModel;
 import com.revolut.currencyconverter.utils.SetupRateList;
+import com.revolut.currencyconverter.utils.Utils;
 
 import java.util.List;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -42,7 +44,6 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
     private List<RatesListModel> ratesList;
     private RatesModel ratesModel;
     private baseRateChange baseRateChange;
-    private RatesListModel baseRate;
     private boolean hasFocusOnBase = false;
 
     public RatesListAdapter(List<RatesListModel> ratesList, Context context, RatesModel ratesModel, baseRateChange baseRateChange) {
@@ -71,9 +72,6 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         RatesListModel ratesListModel = ratesList.get(position);
-        // set base rate according to our list
-        baseRate = ratesList.get(0);
-
         //set currency data
         if (ratesListModel != null) {
             if (ratesListModel.getCountryFlag() != 0)
@@ -105,8 +103,10 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
         } else {
             Bundle o = (Bundle) payloads.get(0);
             //set updated currency value if the country code is same
-            if ((o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode())))
-                holder.editTextCurrencyRate.setText(o.getString(KEY_RATE));
+            if ((o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode()))) {
+                if (o.getString(KEY_RATE) != null)
+                    holder.editTextCurrencyRate.setText(Utils.formatRate(Objects.requireNonNull(o.getString(KEY_RATE))));
+            }
         }
     }
 
@@ -119,7 +119,7 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
      * method to handle user input
      * */
     private void getUpdatedDataBasedOnUserInput(String userInput, boolean isTyping, String countryCode) {
-        if (baseRate.getCountryCode().equals(countryCode) && isTyping && hasFocusOnBase) {
+        if (BASE_MOVED_CURRENCY_CODE.equals(countryCode) && isTyping && hasFocusOnBase) {
             if (userInput.equals("")) {
                 BASE_RATE = "0";
             } else if (userInput.startsWith("0") && userInput.length() > 1 && !userInput.equals("0.")) {

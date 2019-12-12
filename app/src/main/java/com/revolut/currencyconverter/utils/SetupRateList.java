@@ -73,8 +73,8 @@ import static com.revolut.currencyconverter.utils.Constant.USD;
 import static com.revolut.currencyconverter.utils.Constant.USD_CURRENCY;
 import static com.revolut.currencyconverter.utils.Constant.ZAR;
 import static com.revolut.currencyconverter.utils.Constant.ZAR_CURRENCY;
-import static com.revolut.currencyconverter.utils.Constant.getCurrencyRate;
-import static com.revolut.currencyconverter.utils.Constant.getEURRating;
+import static com.revolut.currencyconverter.utils.Utils.getCurrencyRate;
+import static com.revolut.currencyconverter.utils.Utils.getEURRating;
 
 public class SetupRateList {
 
