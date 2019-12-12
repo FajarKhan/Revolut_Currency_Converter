@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-import static com.revolut.currencyconverter.utils.Constant.BASE_RATE;
 import static com.revolut.currencyconverter.utils.Constant.EUR;
 import static com.revolut.currencyconverter.utils.Constant.KEY_CURRENCY_NAME;
 import static com.revolut.currencyconverter.utils.Constant.KEY_RATE;
@@ -65,7 +64,7 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
     }
 
     /*
-     * method to initiate resources
+     * method to initiate resources and viewModels
      * */
     private void initResources() {
         toolbar.setTitle(getString(R.string.rates_activity_title));
@@ -85,8 +84,9 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
             rvRates.setVisibility(View.GONE);
             Toast.makeText(RatesActivity.this, getResources().getString(R.string.network_error), Toast.LENGTH_SHORT).show();
         } else {
-            //get Rates based on EUR currency
-            viewModel.getRates(EUR);
+            //get Rates based on EUR currency only once ie do not call on every orientation changes
+            if (viewModel.ratesResponse().getValue() == null)
+                viewModel.getRates(EUR);
         }
     }
 
@@ -131,7 +131,7 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
             Log.d("response=", response.toString());
             RatesModel ratesModel = response.getRates();
             if (ratesModel != null) {
-                List<RatesListModel> ratesListModels = new SetupRateList().addData(ratesModel, BASE_RATE);
+                List<RatesListModel> ratesListModels = new SetupRateList().addData(ratesModel);
                 setupRateListRecycler(ratesListModels, ratesModel);
             } else {
                 Toast.makeText(RatesActivity.this, getResources().getString(R.string.errorString), Toast.LENGTH_SHORT).show();

@@ -10,13 +10,14 @@
 
     <!-- Custom material theme -->
     <style name="Theme.AppCompat.Light.NoActionBar" parent="Theme.MaterialComponents.Light">
-    <item name="windowActionBar">false</item>
-    <item name="windowNoTitle">true</item>
-    <item name="colorSurface">#FFFFFF</item>
-    <item name="colorPrimary">#33000000</item>
-    <item name="colorOnSurface">#212121</item>
-    <item name="colorSecondary">#1976D2</item>
-    <item name="colorPrimaryDark">#33000000</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:fontFamily">@font/montserrat</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorPrimary">#33000000</item>
+        <item name="colorOnSurface">#212121</item>
+        <item name="colorSecondary">#1976D2</item>
+        <item name="colorPrimaryDark">#33000000</item>
 
     </style>
 

@@ -25,7 +25,6 @@ import static com.revolut.currencyconverter.utils.Constant.DKK;
 import static com.revolut.currencyconverter.utils.Constant.DKK_CURRENCY;
 import static com.revolut.currencyconverter.utils.Constant.EUR;
 import static com.revolut.currencyconverter.utils.Constant.EUR_CURRENCY;
-import static com.revolut.currencyconverter.utils.Constant.EUR_RATE;
 import static com.revolut.currencyconverter.utils.Constant.GBP;
 import static com.revolut.currencyconverter.utils.Constant.GBP_CURRENCY;
 import static com.revolut.currencyconverter.utils.Constant.HKD;
@@ -82,9 +81,16 @@ public class SetupRateList {
     /*
      * method to setup currency list
      * */
-    public List<RatesListModel> addData(RatesModel ratesModel, String baseRate) {
+    public List<RatesListModel> addData(RatesModel ratesModel) {
         List<RatesListModel> ratesListModels = new ArrayList<>();
-        ratesListModels.add(new RatesListModel(EUR, EUR_CURRENCY, R.drawable.ic_eu_flag, getEURRating(EUR_RATE)));
+        try {
+            ratesListModels.add(new RatesListModel(EUR, EUR_CURRENCY, R.drawable.ic_eu_flag, getEURRating(ratesModel)));
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        ratesListModels.add(new RatesListModel(USD, USD_CURRENCY, R.drawable.ic_us_flag, getCurrencyRate(ratesModel.getUSD(), USD)));
+        ratesListModels.add(new RatesListModel(CAD, CAD_CURRENCY, R.drawable.ic_canada_flag, getCurrencyRate(ratesModel.getCAD(), CAD)));
+        ratesListModels.add(new RatesListModel(SEK, SEK_CURRENCY, R.drawable.ic_sweden_flag, getCurrencyRate(ratesModel.getSEK(), SEK)));
         ratesListModels.add(new RatesListModel(CHF, CHF_CURRENCY, 0, getCurrencyRate(ratesModel.getCHF(), CHF)));
         ratesListModels.add(new RatesListModel(HRK, HRK_CURRENCY, 0, getCurrencyRate(ratesModel.getHRK(), HRK)));
         ratesListModels.add(new RatesListModel(MXN, MXN_CURRENCY, 0, getCurrencyRate(ratesModel.getMXN(), MXN)));
@@ -106,15 +112,12 @@ public class SetupRateList {
         ratesListModels.add(new RatesListModel(HKD, HKD_CURRENCY, 0, getCurrencyRate(ratesModel.getHKD(), HKD)));
         ratesListModels.add(new RatesListModel(ISK, ISK_CURRENCY, 0, getCurrencyRate(ratesModel.getISK(), ISK)));
         ratesListModels.add(new RatesListModel(DKK, DKK_CURRENCY, 0, getCurrencyRate(ratesModel.getDKK(), DKK)));
-        ratesListModels.add(new RatesListModel(CAD, CAD_CURRENCY, R.drawable.ic_canada_flag, getCurrencyRate(ratesModel.getCAD(), CAD)));
         ratesListModels.add(new RatesListModel(MYR, MYR_CURRENCY, 0, getCurrencyRate(ratesModel.getMYR(), MYR)));
-        ratesListModels.add(new RatesListModel(USD, USD_CURRENCY, R.drawable.ic_us_flag, getCurrencyRate(ratesModel.getUSD(), USD)));
         ratesListModels.add(new RatesListModel(BGN, BGN_CURRENCY, 0, getCurrencyRate(ratesModel.getBGN(), BGN)));
         ratesListModels.add(new RatesListModel(NOK, NOK_CURRENCY, 0, getCurrencyRate(ratesModel.getNOK(), NOK)));
         ratesListModels.add(new RatesListModel(RON, RON_CURRENCY, 0, getCurrencyRate(ratesModel.getRON(), RON)));
         ratesListModels.add(new RatesListModel(SGD, SGD_CURRENCY, 0, getCurrencyRate(ratesModel.getSGD(), SGD)));
         ratesListModels.add(new RatesListModel(CZK, CZK_CURRENCY, 0, getCurrencyRate(ratesModel.getCZK(), CZK)));
-        ratesListModels.add(new RatesListModel(SEK, SEK_CURRENCY, R.drawable.ic_sweden_flag, getCurrencyRate(ratesModel.getSEK(), SEK)));
         ratesListModels.add(new RatesListModel(NZD, NZD_CURRENCY, 0, getCurrencyRate(ratesModel.getNZD(), NZD)));
         ratesListModels.add(new RatesListModel(BRL, BRL_CURRENCY, 0, getCurrencyRate(ratesModel.getBRL(), BRL)));
         return ratesListModels;
