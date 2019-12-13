@@ -76,7 +76,6 @@ public class Constant {
      * */
     public static String BASE_RATE = "100";
     public static String EUR_RATE = "100";
-    public static String BASE_MOVED_RATE = "BASE_MOVED_RATE";
     public static String BASE_MOVED_CURRENCY_CODE = "EUR";
     public static String KEY_RATE = "key_rate";
     public static String KEY_CURRENCY_NAME = "key_currency_name";

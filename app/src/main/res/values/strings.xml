@@ -3,5 +3,7 @@
     <string name="rates_activity_title">Rates</string>
 
     <string name="network_error">No network connection.</string>
-    <string name="errorString">Something went wrong, Please try again.</string>
+    <string name="errorString">Something went wrong</string>
+    <string name="text_try_again">Try again</string>
+    <string name="txt_error_sub_title">Even the things we love break sometimes :(\n Maybe check back here later.</string>
 </resources>

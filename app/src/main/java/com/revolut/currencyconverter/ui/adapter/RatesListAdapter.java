@@ -16,14 +16,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.revolut.currencyconverter.R;
 import com.revolut.currencyconverter.model.RatesListModel;
 import com.revolut.currencyconverter.model.RatesModel;
+import com.revolut.currencyconverter.utils.RatesDiffUtilCallback;
 import com.revolut.currencyconverter.utils.SetupRateList;
-import com.revolut.currencyconverter.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,10 +33,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_CURRENCY_CODE;
-import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_RATE;
 import static com.revolut.currencyconverter.utils.Constant.BASE_RATE;
 import static com.revolut.currencyconverter.utils.Constant.KEY_CURRENCY_NAME;
 import static com.revolut.currencyconverter.utils.Constant.KEY_RATE;
+import static com.revolut.currencyconverter.utils.Utils.formatRate;
 
 public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.ViewHolder> {
 
@@ -103,9 +105,10 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
         } else {
             Bundle o = (Bundle) payloads.get(0);
             //set updated currency value if the country code is same
-            if ((o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode()))) {
+            if (o.getString(KEY_CURRENCY_NAME).equals(ratesList.get(position).getCountryCode())
+                    && !(o.getString(KEY_CURRENCY_NAME).equals(BASE_MOVED_CURRENCY_CODE))) {
                 if (o.getString(KEY_RATE) != null)
-                    holder.editTextCurrencyRate.setText(Utils.formatRate(Objects.requireNonNull(o.getString(KEY_RATE))));
+                    holder.editTextCurrencyRate.setText(formatRate(Objects.requireNonNull(o.getString(KEY_RATE))));
             }
         }
     }
@@ -116,7 +119,9 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
     }
 
     /*
-     * method to handle user input
+     * method to handle user input :
+     * set 0 if user input empty
+     * remove 0 when start with 0
      * */
     private void getUpdatedDataBasedOnUserInput(String userInput, boolean isTyping, String countryCode) {
         if (BASE_MOVED_CURRENCY_CODE.equals(countryCode) && isTyping && hasFocusOnBase) {
@@ -127,7 +132,7 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
             } else {
                 BASE_RATE = userInput;
             }
-
+            //set typed data as base rate
             ratesList.get(0).setCurrencyRate(BASE_RATE);
             //get new data based on user input using interface call
             List<RatesListModel> newRatesList = new SetupRateList().addData(ratesModel);
@@ -139,25 +144,40 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
      * calls every time user select any other currency for conversion
      * */
     private void setNewBase(int position, String value) {
-        if (position != 0) {
+        if (position != 0 && !BASE_MOVED_CURRENCY_CODE.equals(ratesList.get(position).getCountryCode())) {
+            //get user selected currency
+            List<RatesListModel> updatedRates = new ArrayList<>(ratesList);
             // remove selected currency from list
             RatesListModel ratesListModel = ratesList.get(position);
-            ratesList.remove(position);
+            updatedRates.remove(position);
+            //add selected currency to top of the list
+            updatedRates.add(0, ratesListModel);
 
+            //add 0 when old base start with dot
+            if (BASE_RATE.startsWith("."))
+                updatedRates.get(1).setCurrencyRate(formatRate(BASE_RATE));
             // set data for future reference
-            BASE_MOVED_RATE = ratesListModel.getCurrencyRate();
             BASE_RATE = value;
             BASE_MOVED_CURRENCY_CODE = ratesListModel.getCountryCode();
-
-            // add selected data to top of the list and animate it
-            ratesList.add(0, ratesListModel);
-            notifyItemMoved(position, 0);
+            //scroll automatically to top when user tap on any currency
             parentRecycler.scrollToPosition(0);
+            //sent new list for DiffUtil calculations
+            onNewData(updatedRates);
         }
     }
 
     public List<RatesListModel> getOldRatesList() {
         return ratesList;
+    }
+
+    /*
+     * method to call DiffUtils class based on new and old rate list
+     * */
+    public void onNewData(List<RatesListModel> newData) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new RatesDiffUtilCallback(newData, ratesList));
+        diffResult.dispatchUpdatesTo(this);
+        this.ratesList.clear();
+        this.ratesList.addAll(newData);
     }
 
     /*
@@ -206,13 +226,16 @@ public class RatesListAdapter extends RecyclerView.Adapter<RatesListAdapter.View
 
         @Override
         public void onFocusChange(View view, boolean b) {
-            if (b) {
+            if (b)
                 hasFocusOnBase = true;
-            } else {
+            else
                 hasFocusOnBase = false;
-            }
+
         }
 
+        /*
+         * calls every time when user click any currency from list
+         * */
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
             setNewBase(getAdapterPosition(), editTextCurrencyRate.getText().toString());

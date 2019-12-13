@@ -53,4 +53,8 @@ public class RatesViewModel extends ViewModel {
     protected void onCleared() {
         disposables.clear();
     }
+
+    public void stopRatesUpdates(){
+        disposables.clear();
+    }
 }

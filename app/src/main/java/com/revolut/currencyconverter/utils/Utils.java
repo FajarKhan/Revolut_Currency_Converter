@@ -12,7 +12,6 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_CURRENCY_CODE;
-import static com.revolut.currencyconverter.utils.Constant.BASE_MOVED_RATE;
 import static com.revolut.currencyconverter.utils.Constant.BASE_RATE;
 import static com.revolut.currencyconverter.utils.Constant.EUR;
 import static com.revolut.currencyconverter.utils.Constant.EUR_RATE;
@@ -42,25 +41,33 @@ public class Utils {
     /*
      * method to set currency based on base rate
      * */
-    public static String getCurrencyRate(String currency, String countryCode) {
+    public static String getCurrencyRate(String currency, String countryCode, RatesModel ratesModel) {
         // remove coma from from string for calculations
         replaceComa();
 
         // return empty if typed data is 0 and 0.1 if . respectively
         if (BASE_RATE.equals(".")) BASE_RATE = "0.";
-        if (BASE_RATE.equals("0"))
-            return "";
-
+        if (BASE_RATE.equals("0") || BASE_RATE.equals("")) return "";
             /*
              * calculating currency rate using formula when
              *  1- current base is EUR : user typed rate * EUR rate
-             *  2- current base is not EUR : user typed rate * (current currency/base rate) * EUR rate
+             *  2- current base is not EUR : user typed rate * (current currency/base rate)
              * */
         else if (BASE_MOVED_CURRENCY_CODE.equals(EUR))
-            return (getFormattedText(Float.parseFloat(BASE_RATE) * Float.parseFloat(currency)));
-        else
-            return (getFormattedText((Float.parseFloat(BASE_RATE) *
-                    (Float.parseFloat(currency) / Float.parseFloat(BASE_MOVED_RATE))) * Float.parseFloat(EUR_RATE)));
+            return (getFormattedText(toFloat(BASE_RATE) * toFloat(currency)));
+        else {
+            try {
+                // using java reflection to get base rate
+                Field selectedCurrency = RatesModel.class.getDeclaredField(BASE_MOVED_CURRENCY_CODE);
+                selectedCurrency.setAccessible(true);
+                String selectedCurrencyValue = (String) selectedCurrency.get(ratesModel);
+                if (selectedCurrencyValue != null)
+                    return getFormattedText(toFloat(BASE_RATE) * (toFloat(currency) / toFloat(selectedCurrencyValue)));
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return currency;
+        }
     }
 
     /*
@@ -72,8 +79,7 @@ public class Utils {
 
         // return empty if typed data is 0 and 0.1 if . respectively
         if (BASE_RATE.equals(".")) BASE_RATE = "0.";
-        if (BASE_RATE.equals("0"))
-            return "";
+        if (BASE_RATE.equals("0") || BASE_RATE.equals("")) return "";
 
             /*
              * calculating EUR rate using formula when
@@ -83,18 +89,19 @@ public class Utils {
         else if (BASE_MOVED_CURRENCY_CODE.equals(EUR)) {
             return BASE_RATE;
         } else {
+            // using java reflection to get selected currency rate
             Field selectedCurrency = RatesModel.class.getDeclaredField(BASE_MOVED_CURRENCY_CODE);
             selectedCurrency.setAccessible(true);
             String selectedCurrencyValue = (String) selectedCurrency.get(ratesModel);
             if (selectedCurrencyValue != null)
-                return (getFormattedText((Float.parseFloat(BASE_RATE) / Float.parseFloat(selectedCurrencyValue))));
+                return (getFormattedText((toFloat(BASE_RATE) / toFloat(selectedCurrencyValue))));
             else
-                return "";
+                return EUR_RATE;
         }
     }
 
     /*
-     * method to format currency value by adding coma separation in thousand and setting 2 decimal value
+     * method to format currency value by adding coma separation in thousand and setting max 2 decimal value
      * */
     public static String getFormattedText(Float value) {
         DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
@@ -104,10 +111,22 @@ public class Utils {
     }
 
     /*
+     * method convert string value to float
+     * */
+    public static Float toFloat(String value){
+        Float number = 0.0f;
+        try {
+            number = Float.parseFloat(value);
+        } catch (NumberFormatException e) {
+            System.out.println("value is not a number");
+        }
+        return number;
+    }
+
+    /*
      * method to remove coma from value for calculation
      * */
     public static void replaceComa() {
-        BASE_MOVED_RATE = BASE_MOVED_RATE.replaceAll(",", "");
         BASE_RATE = BASE_RATE.replaceAll(",", "");
     }
 

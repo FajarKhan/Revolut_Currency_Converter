@@ -3,16 +3,19 @@ package com.revolut.currencyconverter.ui.rates;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.facebook.shimmer.ShimmerFrameLayout;
+import com.google.android.material.button.MaterialButton;
 import com.revolut.currencyconverter.MyApplication;
 import com.revolut.currencyconverter.R;
 import com.revolut.currencyconverter.model.RatesListModel;
@@ -25,6 +28,7 @@ import com.revolut.currencyconverter.utils.Utils;
 import com.revolut.currencyconverter.utils.ViewModelFactory;
 import com.revolut.currencyconverter.viewmodel.RatesViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -33,10 +37,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 import static com.revolut.currencyconverter.utils.Constant.EUR;
-import static com.revolut.currencyconverter.utils.Constant.KEY_CURRENCY_NAME;
-import static com.revolut.currencyconverter.utils.Constant.KEY_RATE;
 
-public class RatesActivity extends AppCompatActivity implements RatesListAdapter.baseRateChange {
+public class RatesActivity extends AppCompatActivity implements RatesListAdapter.baseRateChange, View.OnClickListener {
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -49,6 +51,14 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
     Toolbar toolbar;
     @BindView(R.id.lav_loader)
     LottieAnimationView lavNoData;
+    @BindView(R.id.txt_error_title)
+    TextView txtErrorTitle;
+    @BindView(R.id.txt_error_sub_title)
+    TextView txtErrorSubTitle;
+    @BindView(R.id.btn_try_again)
+    MaterialButton btnTryAgain;
+    @BindView(R.id.cl_error_layout)
+    ConstraintLayout clErrorLayout;
 
     private RatesViewModel viewModel;
     private RatesListAdapter adapter;
@@ -72,6 +82,8 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
 
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(RatesViewModel.class);
         viewModel.ratesResponse().observe(this, this::ratesResponse);
+
+        btnTryAgain.setOnClickListener(this);
     }
 
 
@@ -80,9 +92,7 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
      * */
     private void getCurrencyRates() {
         if (!Utils.checkInternetConnection(this)) {
-            lavNoData.setVisibility(View.VISIBLE);
-            rvRates.setVisibility(View.GONE);
-            Toast.makeText(RatesActivity.this, getResources().getString(R.string.network_error), Toast.LENGTH_SHORT).show();
+            setErrorData(false, getResources().getString(R.string.network_error));
         } else {
             //get Rates based on EUR currency only once ie do not call on every orientation changes
             if (viewModel.ratesResponse().getValue() == null)
@@ -96,26 +106,26 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
     private void ratesResponse(ApiResponse apiResponse) {
 
         switch (apiResponse.status) {
-
+            // calls if API is in loading state
             case LOADING:
                 shimmerLayout.setVisibility(View.VISIBLE);
                 shimmerLayout.startShimmer();
+                rvRates.setVisibility(View.GONE);
                 break;
 
+            // calls on successful API response
             case SUCCESS:
                 shimmerLayout.setVisibility(View.GONE);
                 shimmerLayout.stopShimmer();
-                lavNoData.setVisibility(View.GONE);
-                rvRates.setVisibility(View.VISIBLE);
+                setErrorData(true, "");
                 renderSuccessResponse(apiResponse.data);
                 break;
 
+            // calls on failure API response
             case ERROR:
                 shimmerLayout.setVisibility(View.GONE);
                 shimmerLayout.stopShimmer();
-                lavNoData.setVisibility(View.VISIBLE);
-                rvRates.setVisibility(View.GONE);
-                Toast.makeText(RatesActivity.this, getResources().getString(R.string.errorString), Toast.LENGTH_SHORT).show();
+                setErrorData(false, getResources().getString(R.string.errorString));
                 break;
 
             default:
@@ -124,7 +134,7 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
     }
 
     /*
-     * method to handle success response
+     * method to handle success/error response
      * */
     private void renderSuccessResponse(RatesResponse response) {
         if (response != null) {
@@ -134,10 +144,10 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
                 List<RatesListModel> ratesListModels = new SetupRateList().addData(ratesModel);
                 setupRateListRecycler(ratesListModels, ratesModel);
             } else {
-                Toast.makeText(RatesActivity.this, getResources().getString(R.string.errorString), Toast.LENGTH_SHORT).show();
+                setErrorData(false, getResources().getString(R.string.errorString));
             }
         } else {
-            Toast.makeText(RatesActivity.this, getResources().getString(R.string.errorString), Toast.LENGTH_SHORT).show();
+            setErrorData(false, getResources().getString(R.string.errorString));
         }
     }
 
@@ -145,15 +155,17 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
      * method to setup RecyclerView
      * */
     private void setupRateListRecycler(List<RatesListModel> list, RatesModel ratesModel) {
-        // don't initialize if our list already exist
+        // don't need initialize if our list already exist
         if (adapter == null) {
             rvRates.setLayoutManager(new LinearLayoutManager(this));
             adapter = new RatesListAdapter(list, this, ratesModel, this);
             rvRates.setHasFixedSize(true);
             rvRates.setAdapter(adapter);
-        } else {
+            RecyclerView.ItemAnimator animator = rvRates.getItemAnimator();
+            if (animator instanceof SimpleItemAnimator)
+                ((SimpleItemAnimator) animator).setSupportsChangeAnimations(false);
+        } else
             setUpdatedRates(list, adapter.getOldRatesList());
-        }
     }
 
     /*
@@ -170,15 +182,47 @@ public class RatesActivity extends AppCompatActivity implements RatesListAdapter
      * 2- get updated rates every 1 sec
      * */
     private void setUpdatedRates(List<RatesListModel> newRatesList, List<RatesListModel> oldRatesList) {
-        // we compare old list and updated rate list based on user input or from server and sent to RecycleView using payload strategy
-        for (int i = 1; i < oldRatesList.size(); i++) {
+        // we compare old list and updated rate list based on user input or from server and sent to RecycleView using DiffUtils
+        List<RatesListModel> list = new ArrayList<>();
+        for (int i = 0; i < oldRatesList.size(); i++) {
             for (int j = 0; j < newRatesList.size(); j++) {
                 if (oldRatesList.get(i).getCountryCode().equals(newRatesList.get(j).getCountryCode())) {
-                    Bundle diffPayLoad = new Bundle();
-                    diffPayLoad.putString(KEY_RATE, newRatesList.get(j).getCurrencyRate());
-                    diffPayLoad.putString(KEY_CURRENCY_NAME, newRatesList.get(j).getCountryCode());
-                    adapter.notifyItemChanged(i, diffPayLoad);
+                    list.add(i, newRatesList.get(j));
                 }
+            }
+        }
+        //Calling DifUtils with old and new list
+        adapter.onNewData(list);
+    }
+
+    /*
+     * method to handle view based on success/ failure response
+     * stop rates update API if there was any failure in API
+     * */
+    private void setErrorData(Boolean isSuccessful, String errorText) {
+        if (isSuccessful) {
+            clErrorLayout.setVisibility(View.GONE);
+            rvRates.setVisibility(View.VISIBLE);
+        } else {
+            viewModel.stopRatesUpdates();
+            clErrorLayout.setVisibility(View.VISIBLE);
+            txtErrorTitle.setText(errorText);
+            txtErrorSubTitle.setText(getResources().getString(R.string.txt_error_sub_title));
+            rvRates.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        /*
+         * calls every time when user click on try again button
+         * */
+        if (view.getId() == R.id.btn_try_again) {
+            if (!Utils.checkInternetConnection(this))
+                setErrorData(false, getResources().getString(R.string.network_error));
+            else {
+                setErrorData(true, "");
+                viewModel.getRates(EUR);
             }
         }
     }
